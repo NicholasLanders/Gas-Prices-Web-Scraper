@@ -1,33 +1,40 @@
 function main() {
-    let newVal = scrapeGasPrices("https://www.caa.ca/gas-prices/");
-    //updateSheet(newVal);
+    let newVal = scrapeGasPrices("https://nsuarb.novascotia.ca/mandates/gasoline-diesel-pricing/gasoline-prices-zone-map");
+    updateSheet(newVal);
   }
   
   function scrapeGasPrices(url) {
+    let newVal = {};
     let html = UrlFetchApp.fetch(url).getContentText();
     let $ = Cheerio.load(html);
-    dropDown = $("#provinces_chooser_dropdown");
-    dropDown.val("Nova Scotia");
   
-    let gasPrice = $("#local_dropdown li[data-location='HALIFAX']").attr("data-today");
-  
-    newVal[0] = gasPrice;
-  
-    // Timestamp storage
-    let newVal = [2];
-    newVal[1] = Utilities.formatDate(new Date(), 'Etc/GMT', "yyyy-MM-dd HH:mm:ssZ");
+    // Halifax is in zone 1
+    newVal.gasPrice = $(".field--name-field-zone-1-unleaded-min").text();
+    newVal.gasLastUpdated = "The last update was: " + $(".datetime").text();
+    newVal.timeStamp = Utilities.formatDate(new Date(), 'Etc/GMT', "yyyy-MM-dd HH:mm:ss");
+    
     return newVal;
   }
   
+  // Very specific to the way I do my budget in google sheets 
   function updateSheet(newVal) {
-      
+    let litresOfGas = 37;
+    let gasPrice = newVal.gasPrice;
+    let timeStamp = newVal.timeStamp;
+    let gasLastUpdated = newVal.gasLastUpdated;
+  
+    // To account for monthly gas, and also converting to proper number for dollars and cents
+    gasPrice = (((gasPrice / 100) * litresOfGas) * 2).toFixed(2);
     // Removed personal sheet ID, which would go in the line below
     let budgetSheet = SpreadsheetApp.openById("");
     let sheet = budgetSheet.getSheets()[0];
-    let cell = sheet.createTextFinder("Gas").findNext();
-    cell = cell.offset(1, 0)
-    cell.setValue(newVal[0]);
+    let gasCell = sheet.createTextFinder("Gas").findNext();
+    gasCell = gasCell.offset(1, 0)
+    gasCell.setValue(gasPrice);
   
-    let timeCell = cell.offset(1, 0);
-    timeCell.setValue(newVal[1]);
+    let timeCell = gasCell.offset(1, 0);
+    timeCell.setValue(timeStamp);
+  
+    let lastUpdatedCell = timeCell.offset(1, 0);
+    lastUpdatedCell.setValue(gasLastUpdated);
   }
