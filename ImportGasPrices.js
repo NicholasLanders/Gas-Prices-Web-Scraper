@@ -18,7 +18,7 @@ function main() {
   
   // Very specific to the way I do my budget in google sheets 
   function updateSheet(newVal) {
-    let litresOfGas = 37;
+    let litresOfGas = 39;
     let gasPrice = newVal.gasPrice /100;
     let timeStamp = newVal.timeStamp;
     let gasLastUpdated = newVal.gasLastUpdated;
